@@ -1,0 +1,57 @@
+-- https://www.periscopedata.com/blog/use-self-joins-to-calculate-your-retention-churn-and-reactivation-metrics.html
+-- User retention for a given period
+with period_activity as (
+  select distinct
+    date_trunc('week', submission) as period,
+    clientid
+  from events
+)
+select
+  this_period.period,
+  count(distinct this_period.clientid)
+from period_activity this_period
+join period_activity last_period
+  on this_period.clientid = last_period.clientid
+  and this_period.period = last_period.period + interval '1 week'
+group by 1
+
+-- https://www.periscopedata.com/blog/how-to-calculate-cohort-retention-in-sql.html
+-- Calculate new-user retention
+select
+  clients.profile_created as date,
+  count(distinct events.clientid) as new_users,
+  count(distinct future_events.clientid) as retained_users,
+  count(distinct future_events.clientid) /
+    count(distinct events.clientid)::float as retention
+from events
+
+-- Limits events to events from new users
+join clients on
+  events.clientid = clients.clientid
+  and clients.profile_created = events.submission
+
+left join events as future_events on
+  events.clientid = future_events.clientid
+  and events.submission = future_events.submission - interval '1 day'
+group by 1
+
+-- Look at new user counts over daily, weekly and monthly periods
+select
+  d,
+  daily_users,
+  sum(daily_users) over (
+    order by d
+    rows between 7 preceding and current row
+  ) weekly_avg,
+  sum(daily_users) over (
+    order by d
+    rows between 30 preceding and current row
+  ) monthly_avg
+from (
+  select
+    date(profile_created) d,
+    count(1) daily_users
+  from clients
+  where profile_created > date '2016-01-01' and profile_created < date '2016-02-05'
+  group by 1
+) daily_new_users
