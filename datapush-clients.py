@@ -24,11 +24,11 @@ try:
     cur = con.cursor()
 
     upsertSQL = ("INSERT INTO "
-                 "clients(clientid, channel, profile_created, submission_modified, current_appversion, current_osversion, memory) VALUES (%s, %s, %s, %s, %s, %s, %s) "
+                 "clients(clientid, channel, profile_created, last_submission, current_appversion, current_osversion, memory) VALUES (%s, %s, %s, %s, %s, %s, %s) "
                  "ON CONFLICT (clientid) DO "
                  "UPDATE SET "
                  "profile_created = EXCLUDED.profile_created, "
-                 "submission_modified = EXCLUDED.submission_modified, "
+                 "last_submission = EXCLUDED.last_submission, "
                  "current_appversion = EXCLUDED.current_appversion, "
                  "current_osversion = EXCLUDED.current_osversion, "
                  "memory = EXCLUDED.memory")
