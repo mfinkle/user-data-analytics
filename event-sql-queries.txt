@@ -55,3 +55,20 @@ from (
   where profile_created > date '2016-01-01' and profile_created < date '2016-02-05'
   group by 1
 ) daily_new_users
+
+-- Distribution of an action across clients
+with client_actions as (
+select
+  clientid,
+  action,
+  count(action) as action_count
+from events
+where action = 'loadurl.1'
+group by 1, 2
+)
+-- http://www.fnogol.de/archives/2005/05/14/group-by-logarithmic-count-in-sql/
+select metric, count(metric)
+from (select round(pow(2, ceil(log(2, action_count + 0.0001))))
+           as metric from client_actions) as rollup
+group by 1
+order by 1
