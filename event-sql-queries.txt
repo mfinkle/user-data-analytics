@@ -72,3 +72,17 @@ from (select round(pow(2, ceil(log(2, action_count + 0.0001))))
            as metric from client_actions) as rollup
 group by 1
 order by 1
+
+
+-- Unnesting JSON array in Presto
+select
+  clientid,
+  timestamp,
+  action,
+  session,
+  ord
+from
+  android_events_v1
+cross join unnest(cast(json_parse(sessions) as array<varchar>)) with ordinality as t (session, ord)
+where
+  sessions is not null
